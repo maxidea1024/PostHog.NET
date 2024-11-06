@@ -74,9 +74,9 @@ namespace PostHog
             Enqueue(new Identify(distinctId, properties, timestamp));
         }
 
-        public void Page(string distinctId, Properties? properties = null, DateTime? timestamp = null)
+        public void PageView(string distinctId, Properties? properties = null, DateTime? timestamp = null)
         {
-            Enqueue(new Page(distinctId, properties, timestamp));
+            Enqueue(new PageView(distinctId, properties, timestamp));
         }
 
         internal void RaiseFailure(BaseAction action, Exception e)

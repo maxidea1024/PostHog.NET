@@ -37,7 +37,7 @@ namespace PostHog.Flush
 
         private readonly IRequestHandler _requestHandler;
 
-        private readonly Semaphore _semaphore;
+        private readonly SemaphoreSlim _semaphore;
 
         private readonly int _threads;
 
@@ -59,7 +59,7 @@ namespace PostHog.Flush
             _continue = new CancellationTokenSource();
             _flushInterval = flushInterval;
             _threads = threads;
-            _semaphore = new Semaphore(_threads, _threads);
+            _semaphore = new SemaphoreSlim(_threads, _threads);
             _apiKey = apiKey;
             _jsonSerializerOptions = jsonSerializerOptions;
 
@@ -76,11 +76,12 @@ namespace PostHog.Flush
         public async Task FlushAsync()
         {
             await PerformFlush().ConfigureAwait(false);
-            WaitWorkersToBeReleased();
+            await WaitWorkersToBeReleased();
         }
 
         public void Process(BaseAction action)
         {
+            // TODO: 단지 길이 제한을 위해서 json을 시리얼라이징하고 있다. 이 부분을 제거할수 있을까?
             action.Size = JsonSerializer.Serialize(action, _jsonSerializerOptions).Length;
 
             if (action.Size > ActionMaxSize)
@@ -116,7 +117,7 @@ namespace PostHog.Flush
                 if (current.Count > 0)
                 {
                     // we have a batch that we're trying to send
-                    var batch = new Batch(current, _apiKey);
+                    var batch = new Batch(current, _apiKey); //TODO _apiKey는 따로 설정하는게 좋을듯한데?
 
                     // make the request here
                     await _requestHandler.MakeRequest(batch);
@@ -135,7 +136,7 @@ namespace PostHog.Flush
 
         private async Task PerformFlush()
         {
-            if (!_semaphore.WaitOne(1))
+            if (!await _semaphore.WaitAsync(1))
             {
                 return;
             }
@@ -156,9 +157,21 @@ namespace PostHog.Flush
             _timer = new Timer(IntervalCallback, new { }, initialDelay, _flushInterval);
         }
 
-        private void WaitWorkersToBeReleased()
+        private async Task WaitWorkersToBeReleased()
         {
-            for (var i = 0; i < _threads; i++) _semaphore.WaitOne();
+            //for (var i = 0; i < _threads; i++) _semaphore.WaitOne();
+            //await _semaphore.Wait(_threads);
+
+
+            // TODO: 메모리 할당을 제거할 수 없나?
+
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < _threads; i++)
+            {
+                tasks.Add(_semaphore.WaitAsync());
+            }
+            await Task.WhenAll(tasks.ToArray());
+
             _semaphore.Release(_threads);
         }
     }

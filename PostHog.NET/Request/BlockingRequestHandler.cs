@@ -70,6 +70,8 @@ namespace PostHog.Request
 
                 var json = JsonSerializer.Serialize(batch, _jsonSerializerOptions);
 
+                // TODO: 메모리 할당 제거.
+
                 // Prepare request data;
                 var requestData = Encoding.UTF8.GetBytes(json);
 
@@ -106,7 +108,7 @@ namespace PostHog.Request
                         responseStr = ex.Message;
                         retry = true;
                     }
-                    
+
                     watch.Stop();
                     statusCode = response?.StatusCode ?? HttpStatusCode.InternalServerError;
 
@@ -140,10 +142,10 @@ namespace PostHog.Request
                     Fail(batch, new ApiException(statusCode.ToString(), message));
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 watch.Stop();
-                Fail(batch, e);
+                Fail(batch, ex);
             }
         }
 

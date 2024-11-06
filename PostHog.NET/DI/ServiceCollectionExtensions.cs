@@ -11,10 +11,10 @@ namespace PostHog.DI
         }
 
         public static IServiceCollection AddPostHog(this IServiceCollection services, string apiKey,
-            Action<Config>? configuration)
+            Action<Config>? configure)
         {
             var config = new Config();
-            configuration?.Invoke(config);
+            configure?.Invoke(config);
 
             var client = new PostHogClient(apiKey, config);
             services.AddSingleton<IPostHogClient>(client);

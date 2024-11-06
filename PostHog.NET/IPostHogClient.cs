@@ -69,7 +69,7 @@ namespace PostHog
         /// "friendCount”. You can segment your users by any trait you record.
         /// </param>
         /// <param name="timestamp">The event timestamp.</param>
-        void Page(string distinctId, Properties? properties = null, DateTime? timestamp = null);
+        void PageView(string distinctId, Properties? properties = null, DateTime? timestamp = null);
 
         Config? Config { get; }
 
