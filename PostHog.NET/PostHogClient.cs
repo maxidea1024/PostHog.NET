@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace PostHog
 {
+    // TODO: 메모리 풀링
     public class PostHogClient : IPostHogClient
     {
         private readonly AsyncIntervalFlushHandler _flushHandler;
